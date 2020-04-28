@@ -84,7 +84,8 @@ def process(input)
 end
 
 def ask(name)
-    return $prompt.ask(name)
+    input = prompt.ask(name)
+    return input
 end
 
 
@@ -94,7 +95,8 @@ greetings()
 # main loop
 while $running
 
+
     input = ask("PatatorAuto > ")
     process(input)
-
+    
 end
