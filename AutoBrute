@@ -1,3 +1,4 @@
+#!/usr/bin/ruby
 ##############################################################
 ##                  PatatorAuto V0.1                         #
 ##      Wrapper for Patator bruteforce tool                  #
@@ -16,7 +17,7 @@ require "tty-prompt"
 $running = true
 # create the prompt
 $prompt = TTY::Prompt.new
-$modules = hash = { "ssh_module" => "Brute-force SSH" }
+$modules = { "ssh_module" => "Brute-force SSH" }
 
 # Welcome message
 def greetings()
@@ -59,16 +60,35 @@ end
 #  keyfile       : file with RSA, DSA or ECDSA private key to test
 #  persistent    : use persistent connections [1|0] 
 def ssh_module()
-    command = "patator ssh_login host=#{host} user=#{user} password=#{password} -x ignore:mesg='Authentication failed.'"
+    exit = false
+    options = {"host":[{"desc":"target host","state":"required","value":""}],"port":[{"desc":"target port","state":"required","value":"22"}],"user":[{"desc":"usernames to test (value or file)","state":"required","value":"root"}],"password":[{"desc":"passwords to test (value or file)","state":"required","value":"passwd"}],"auth_type":[{"desc":"type of password authentication to use [password|keyboard-interactive|auto]","state":"optional","value":""}],"keyfile":[{"desc":"file with RSA, DSA or ECDSA private key to test","state":"optional","value":""}],"persistent":[{"desc":"use persistent connections [1|0]","state":"optional","value":""}]}
 
+    #command = "patator ssh_login host=#{host} user=#{user} password=#{password} -x ignore:mesg='Authentication failed.'"
 
+    until exit
+        input = ask("ssh_module >")
+
+        case input
+        when "back"
+            exit = true
+        when "quit"
+            bye()
+        when "show options"
+            # print options or options always displayed
+        when "run"
+            # run the command
+        when "set [arg]"
+            # set the value in the options
+
+    
+    end
 
 end
 
 #process the user inputs
 def process(input)
     case input
-    when "end"
+    when "quit"
         bye()
     when "help"
         displayHelp()
@@ -84,8 +104,8 @@ def process(input)
 end
 
 def ask(name)
-    input = prompt.ask(name)
-    return input
+    #prompt = $prompt
+    return $prompt.ask(name)
 end
 
 
@@ -95,8 +115,7 @@ greetings()
 # main loop
 while $running
 
-
     input = ask("PatatorAuto > ")
     process(input)
-    
+
 end
