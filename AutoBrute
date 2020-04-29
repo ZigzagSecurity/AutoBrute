@@ -13,12 +13,6 @@ require "tty-prompt"
 #scrapper nokogiri
 #open3 to execute command
 
-# Global variables
-$running = true
-# create the prompt
-$prompt = TTY::Prompt.new
-$modules = { "ssh_module" => "Brute-force SSH" }
-
 # Welcome message
 def greetings()
     puts "  
@@ -30,6 +24,17 @@ def greetings()
                                    by ZigzagSecurity V0.1 ".red
 
 end
+
+# Global variables
+$running = true
+# create the prompt
+$prompt = TTY::Prompt.new
+$modules = { "ssh_module" => "Brute-force SSH" }
+
+# Options for each modules
+$ssh_module = {"host":[{"desc":"target host","state":"required","value":""}],"port":[{"desc":"target port","state":"required","value":"22"}],"user":[{"desc":"usernames to test (value or file)","state":"required","value":"root"}],"password":[{"desc":"passwords to test (value or file)","state":"required","value":"passwd"}],"auth_type":[{"desc":"type of password authentication to use [password|keyboard-interactive|auto]","state":"optional","value":""}],"keyfile":[{"desc":"file with RSA, DSA or ECDSA private key to test","state":"optional","value":""}],"persistent":[{"desc":"use persistent connections [1|0]","state":"optional","value":""}]}
+
+
 
 # End message
 def bye()
@@ -49,29 +54,21 @@ def printModules()
     end
 end
 
-#Examples:
-#  ssh_login host=10.0.0.1 user=root password=FILE0 0=passwords.txt -x ignore:mesg='Authentication failed.'
-#Module options:
-#  host          : target host
-#  port          : target port [22]
-#  user          : usernames to test
-#  password      : passwords to test
-#  auth_type     : type of password authentication to use [password|keyboard-interactive|auto]
-#  keyfile       : file with RSA, DSA or ECDSA private key to test
-#  persistent    : use persistent connections [1|0] 
-def ssh_module()
+
+def setup_module(module_name)
     exit = false
-    options = {"host":[{"desc":"target host","state":"required","value":""}],"port":[{"desc":"target port","state":"required","value":"22"}],"user":[{"desc":"usernames to test (value or file)","state":"required","value":"root"}],"password":[{"desc":"passwords to test (value or file)","state":"required","value":"passwd"}],"auth_type":[{"desc":"type of password authentication to use [password|keyboard-interactive|auto]","state":"optional","value":""}],"keyfile":[{"desc":"file with RSA, DSA or ECDSA private key to test","state":"optional","value":""}],"persistent":[{"desc":"use persistent connections [1|0]","state":"optional","value":""}]}
+    options = 
 
     #command = "patator ssh_login host=#{host} user=#{user} password=#{password} -x ignore:mesg='Authentication failed.'"
 
     until exit
-        input = ask("ssh_module >")
+        input = ask("#{module_name} >")
 
         case input
         when "back"
             exit = true
         when "quit"
+            exit = true
             bye()
         when "show options"
             # print options or options always displayed
@@ -79,6 +76,7 @@ def ssh_module()
             # run the command
         when "set [arg]"
             # set the value in the options
+        end
 
     
     end
@@ -87,15 +85,18 @@ end
 
 #process the user inputs
 def process(input)
-    case input
+    full_input = input
+    args = input.split(" ")
+
+    case args[0]
     when "quit"
         bye()
     when "help"
         displayHelp()
     when "modules"
         printModules()
-    when "use ssh_module"
-        ssh_module()
+    when "use"
+        setup_module(args[1])
     else
         puts "Wrong options"
         displayHelp()
@@ -115,7 +116,7 @@ greetings()
 # main loop
 while $running
 
-    input = ask("PatatorAuto > ")
+    input = ask("AutoBrute > ")
     process(input)
 
 end
