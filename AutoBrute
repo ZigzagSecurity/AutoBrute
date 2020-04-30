@@ -9,7 +9,8 @@
 
 require 'optionparser'
 require 'colorize'
-require "tty-prompt"
+require 'tty-prompt'
+require 'json'
 #scrapper nokogiri
 #open3 to execute command
 
@@ -32,9 +33,7 @@ $prompt = TTY::Prompt.new
 $modules = { "ssh_module" => "Brute-force SSH" }
 
 # Options for each modules
-$ssh_module = {"host":[{"desc":"target host","state":"required","value":""}],"port":[{"desc":"target port","state":"required","value":"22"}],"user":[{"desc":"usernames to test (value or file)","state":"required","value":"root"}],"password":[{"desc":"passwords to test (value or file)","state":"required","value":"passwd"}],"auth_type":[{"desc":"type of password authentication to use [password|keyboard-interactive|auto]","state":"optional","value":""}],"keyfile":[{"desc":"file with RSA, DSA or ECDSA private key to test","state":"optional","value":""}],"persistent":[{"desc":"use persistent connections [1|0]","state":"optional","value":""}]}
-
-
+$ssh_module = '{"host":{"desc":"target host","required":"yes","value":""},"port":{"desc":"target port","required":"yes","value":"22"},"user":{"desc":"usernames to test (value or file)","required":"yes","value":"root"},"password":{"desc":"passwords to test (value or file)","required":"yes","value":"passwd"},"auth_type":{"desc":"type of password authentication to use [password|keyboard-interactive|auto]","required":"no","value":""},"keyfile":{"desc":"file with RSA, DSA or ECDSA private key to test","required":"no","value":""},"persistent":{"desc":"use persistent connections [1|0]","required":"no","value":""}}'
 
 # End message
 def bye()
@@ -54,10 +53,30 @@ def printModules()
     end
 end
 
+def run(module_name)
+    # execute the command
+end
 
+def show_options(options, name)
+    puts "\nOptions for module #{name}:\n\nName      Current setting      Required      Description\n-----------      -----------      -----------      -----------\n\n"
+
+    options.each do |x,y|
+        puts "#{x}          #{y["value"]}           #{y["required"]}               #{y["desc"]}" 
+    end
+    puts "\n\n"
+end
+
+def get_options(name)
+    case name
+    when "ssh_module"
+        return $ssh_module
+    end
+end
+
+# loop to setup the options and run the command
 def setup_module(module_name)
     exit = false
-    options = 
+    options = JSON.parse(get_options(module_name)) 
 
     #command = "patator ssh_login host=#{host} user=#{user} password=#{password} -x ignore:mesg='Authentication failed.'"
 
@@ -71,14 +90,12 @@ def setup_module(module_name)
             exit = true
             bye()
         when "show options"
-            # print options or options always displayed
+            show_options(options, module_name)
         when "run"
             # run the command
         when "set [arg]"
             # set the value in the options
         end
-
-    
     end
 
 end
