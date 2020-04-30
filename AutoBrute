@@ -16,13 +16,13 @@ require 'json'
 
 # Welcome message
 def greetings()
-    puts "  
-     ____       _        _              _         _        
-    |  _ \\ __ _| |_ __ _| |_ ___  _ __ / \\  _   _| |_ ___  
-    | |_) / _` | __/ _` | __/ _ \\| '__/ _ \\| | | | __/ _ \\ 
-    |  __/ (_| | || (_| | || (_) | | / ___ \\ |_| | || (_) |
-    |_|   \\__,_|\\__\\__,_|\\__\\___/|_|/_/   \\_\\__,_|\\__\\___/ 
-                                   by ZigzagSecurity V0.1 ".red
+    puts " 
+     _         _        ____             _       
+    / \\  _   _| |_ ___ | __ ) _ __ _   _| |_ ___ 
+   / _ \\| | | | __/ _ \\|  _ \\| '__| | | | __/ _ \\
+  / ___ \\ |_| | || (_) | |_) | |  | |_| | ||  __/
+ /_/   \\_\\__,_|\\__\\___/|____/|_|   \\__,_|\\__\\___|
+                           by ZigzagSecurity V0.1 ".red
 
 end
 
@@ -58,7 +58,7 @@ def run(module_name)
 end
 
 def show_options(options, name)
-    puts "\nOptions for module #{name}:\n\nName      Current setting      Required      Description\n-----------      -----------      -----------      -----------\n\n"
+    puts "\nOptions for module #{name}:\n\nName             Current setting              Required               Description\n-----------      -----------      -----------      -----------\n\n"
 
     options.each do |x,y|
         puts "#{x}          #{y["value"]}           #{y["required"]}               #{y["desc"]}" 
@@ -70,7 +70,20 @@ def get_options(name)
     case name
     when "ssh_module"
         return $ssh_module
+    else
+        ret
     end
+end
+
+def set_options(options, args)
+    puts options
+    puts args
+    if options.include? args[1]
+            options[args[1]] = args[2]
+    else
+        puts "Wrong option"
+    end
+    return options
 end
 
 # loop to setup the options and run the command
@@ -81,23 +94,23 @@ def setup_module(module_name)
     #command = "patator ssh_login host=#{host} user=#{user} password=#{password} -x ignore:mesg='Authentication failed.'"
 
     until exit
-        input = ask("#{module_name} >")
+        full_input = ask("#{module_name} >")
+        args = full_input.split(" ")
 
-        case input
+        case args[0]
         when "back"
             exit = true
         when "quit"
             exit = true
             bye()
-        when "show options"
+        when "show"
             show_options(options, module_name)
         when "run"
             # run the command
-        when "set [arg]"
-            # set the value in the options
+        when "set"
+            options = set_options(options, args)
         end
     end
-
 end
 
 #process the user inputs
