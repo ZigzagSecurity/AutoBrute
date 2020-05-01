@@ -41,6 +41,7 @@ def bye()
     $running = false
 end
 
+# Display the help
 def displayHelp()
     puts "Here is the help"
 end
@@ -53,10 +54,12 @@ def printModules()
     end
 end
 
+# execute the command
 def run(module_name)
     # execute the command
 end
 
+# print the options for a module
 def show_options(options, name)
     puts "\nOptions for module #{name}:\n\nName             Current setting              Required               Description\n-----------      -----------      -----------      -----------\n\n"
 
@@ -66,6 +69,7 @@ def show_options(options, name)
     puts "\n\n"
 end
 
+# get the options required for the module
 def get_options(name)
     case name
     when "ssh_module"
@@ -75,13 +79,18 @@ def get_options(name)
     end
 end
 
+
+# set the value for an options 
 def set_options(options, args)
-    puts options
-    puts args
-    if options.include? args[1]
-            options[args[1]] = args[2]
-    else
-        puts "Wrong option"
+    set = false
+    options.each do |x,y|
+        if x == args[1]
+            y["value"] = args[2]
+            set = true
+        end
+    end
+    if not set 
+        puts "Wrong options" 
     end
     return options
 end
