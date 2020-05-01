@@ -1,1 +1,44 @@
-{"host":{"desc":"target host","required":"yes","value":""},"port":{"desc":"target port","required":"yes","value":"22"},"user":{"desc":"usernames to test (value or file)","required":"yes","value":"root"},"password":{"desc":"passwords to test (value or file)","required":"yes","value":"passwd"},"auth_type":{"desc":"type of password authentication to use [password|keyboard-interactive|auto]","required":"no","value":""},"keyfile":{"desc":"file with RSA, DSA or ECDSA private key to test","required":"no","value":""},"persistent":{"desc":"use persistent connections [1|0]","required":"no","value":""}}
+{
+    "host": {
+        "desc": "target host",
+        "required": "yes",
+        "value": ""
+    },
+    "port": {
+        "desc": "target port",
+        "required": "yes",
+        "value": "22"
+    },
+    "user": {
+        "desc": "usernames to test (value or file)",
+        "required": "yes",
+        "value": "root",
+        "file": "no"
+    },
+    "password": {
+        "desc": "passwords to test (value or file)",
+        "required": "yes",
+        "value": "passwd",
+        "file": "no"
+    },
+    "auth_type": {
+        "desc": "type of password authentication to use [password|keyboard-interactive|auto]",
+        "required": "no",
+        "value": ""
+    },
+    "keyfile": {
+        "desc": "file with RSA, DSA or ECDSA private key to test",
+        "required": "no",
+        "value": ""
+    },
+    "persistent": {
+        "desc": "use persistent connections [1|0]",
+        "required": "no",
+        "value": ""
+    },
+    "message": {
+        "desc": "Error message to expect when credentials are invalid",
+        "required": "yes",
+        "value": "Authentication failed"
+    }
+}

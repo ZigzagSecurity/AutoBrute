@@ -33,7 +33,7 @@ $prompt = TTY::Prompt.new
 $modules = { "ssh_module" => "Brute-force SSH" }
 
 # Options for each modules
-$ssh_module = '{"host":{"desc":"target host","required":"yes","value":""},"port":{"desc":"target port","required":"yes","value":"22"},"user":{"desc":"usernames to test (value or file)","required":"yes","value":"root"},"password":{"desc":"passwords to test (value or file)","required":"yes","value":"passwd"},"auth_type":{"desc":"type of password authentication to use [password|keyboard-interactive|auto]","required":"no","value":""},"keyfile":{"desc":"file with RSA, DSA or ECDSA private key to test","required":"no","value":""},"persistent":{"desc":"use persistent connections [1|0]","required":"no","value":""}}'
+$ssh_module = '{"host":{"desc":"target host","required":"yes","value":""},"port":{"desc":"target port","required":"yes","value":"22"},"user":{"desc":"usernames to test (value or file)","required":"yes","value":"root","file":"no"},"password":{"desc":"passwords to test (value or file)","required":"yes","value":"passwd","file":"no"},"auth_type":{"desc":"type of password authentication to use [password|keyboard-interactive|auto]","required":"no","value":""},"keyfile":{"desc":"file with RSA, DSA or ECDSA private key to test","required":"no","value":""},"persistent":{"desc":"use persistent connections [1|0]","required":"no","value":""},"message":{"desc":"Error message to expect when credentials are invalid","required":"yes","value":"Authentication failed"}}'
 
 # End message
 def bye()
@@ -55,8 +55,30 @@ def printModules()
 end
 
 # execute the command
-def run(module_name)
-    # execute the command
+def run(module_name, options)
+    cpt_file = 0
+    #command = "patator ssh_login host=#{host} user=#{user} password=#{password} -x ignore:mesg='Authentication failed.'"
+    command = "patator #{module_name} "
+
+    options.each do |x,y|
+        
+        if y["value"] != ""
+            # if the value is a path to a file
+            if y.key?("file") and y["file"] == "yes"
+                command += "#{x}=FILE#{cpt_file} #{cpt_file}=#{y['value']} "
+                cpt_file += 1
+            elsif x == "message"
+                command += "-x ignore:mesg=\'#{y['value']}\' "
+                # if the value is normal
+            else
+                command += "#{x}=#{y["value"]} "
+            end
+        end
+    end
+    # print the command for debug purpose
+    puts command
+    # execute patator with the command
+
 end
 
 # print the options for a module
@@ -95,12 +117,21 @@ def set_options(options, args)
     return options
 end
 
+# check if all required options are set
+def check_required(options)
+    all_right = true
+    options.each do |x,y|
+        if y["required"] == "yes" and y["value"] == ""
+            all_right = false
+        end
+    end
+    return all_right
+end
+
 # loop to setup the options and run the command
 def setup_module(module_name)
     exit = false
     options = JSON.parse(get_options(module_name)) 
-
-    #command = "patator ssh_login host=#{host} user=#{user} password=#{password} -x ignore:mesg='Authentication failed.'"
 
     until exit
         full_input = ask("#{module_name} >")
@@ -115,7 +146,9 @@ def setup_module(module_name)
         when "show"
             show_options(options, module_name)
         when "run"
-            # run the command
+            if check_required(options)
+                run(module_name, options)
+            end
         when "set"
             options = set_options(options, args)
         end
