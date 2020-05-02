@@ -32,7 +32,7 @@ $prompt = TTY::Prompt.new
 $modules = '{"ssh_module":{"desc":"Brute-force SSH","name":"ssh_login"}}'
 
 # Options for each modules
-$ssh_module = '{"host":{"desc":"target host","required":"yes","value":""},"port":{"desc":"target port","required":"yes","value":"22"},"user":{"desc":"usernames to test (value or file)","required":"yes","value":"root","file":"no"},"password":{"desc":"passwords to test (value or file)","required":"yes","value":"passwd","file":"no"},"auth_type":{"desc":"type of password authentication to use [password|keyboard-interactive|auto]","required":"no","value":""},"keyfile":{"desc":"file with RSA, DSA or ECDSA private key to test","required":"no","value":""},"persistent":{"desc":"use persistent connections [1|0]","required":"no","value":""},"message":{"desc":"Error message to expect when credentials are invalid","required":"yes","value":"Authentication failed"}}'
+$ssh_module = '{"host":{"desc":"target host","required":"yes","value":"","file":"no","is_file":"no"},"port":{"desc":"target port","required":"yes","value":"22","file":"no","is_file":"no"},"user":{"desc":"usernames to test (value or file)","required":"yes","value":"root","file":"maybe","is_file":"no"},"password":{"desc":"passwords to test (value or file)","required":"yes","value":"passwd","file":"maybe","is_file":"no"},"auth_type":{"desc":"type of password authentication to use [password|keyboard-interactive|auto]","required":"no","value":"","file":"no","is_file":"no"},"keyfile":{"desc":"file with RSA, DSA or ECDSA private key to test","required":"no","value":"","file":"yes","is_file":"no"},"persistent":{"desc":"use persistent connections [1|0]","required":"no","value":"","file":"no","is_file":"no"},"message":{"desc":"Error message to expect when credentials are invalid","required":"yes","value":"Authentication failed","file":"no","is_file":"no"}}'
 
 # Array to keep the options for each module
 $array_modules = {"ssh_module" => $ssh_module}
@@ -69,7 +69,7 @@ def run(module_name, options)
         
         if y["value"] != ""
             # if the value is a path to a file
-            if y.key?("file") and y["file"] == "yes"
+            if y["file"] != "no" and y["is_file"] == "yes"
                 command += "#{x}=FILE#{cpt_file} #{cpt_file}=#{y['value']} "
                 cpt_file += 1
             elsif x == "message"
@@ -83,7 +83,13 @@ def run(module_name, options)
     # print the command for debug purpose
     puts command
     # execute patator with the command
-    system(command)
+    begin
+        system(command)
+    rescue SystemExit, Interrupt
+        puts "yolo"
+    rescue Exception => e
+        puts "yolo2"
+    end
 end
 
 # print the options for a module
@@ -115,18 +121,36 @@ def get_options(name)
     end
 end
 
+# test if the string is a path and if the file exist
+def test_file(path)
+    return File.file?(path)
+end
 
 # set the value for an options 
 def set_options(options, args)
     set = false
     options.each do |x,y|
         if x == args[1]
-            y["value"] = args[2]
-            set = true
+            if y["file"] == "no"
+                y["value"] = args[2]
+                set = true
+            elsif y["file"] == "yes" and test_file(args[2])
+                y["value"] = args[2]
+                y["is_file"] = "yes"
+                set = true
+            elsif y["file"] == "maybe"
+                if not test_file(args[2])
+                    puts "!! if the argument provided is a path, the file doesn't exist !!"
+                else
+                    y["is_file"] = "yes"
+                end
+                y["value"] = args[2]
+                set = true
+            end
         end
     end
     if not set 
-        puts "Wrong options" 
+        puts "Wrong option or the file specified doesn't exist "
     end
     return options
 end
@@ -149,6 +173,9 @@ def setup_module(module_name, options)
 
     until exit
         full_input = ask("#{module_name} >")
+        if full_input == nil
+            full_input = " "
+        end
         args = full_input.split(" ")
 
         case args[0]
@@ -167,6 +194,8 @@ def setup_module(module_name, options)
             end
         when "set"
             options = set_options(options, args)
+        else
+            # Handle the empty input
         end
     end
 end

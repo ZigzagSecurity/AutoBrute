@@ -2,43 +2,57 @@
     "host": {
         "desc": "target host",
         "required": "yes",
-        "value": ""
+        "value": "",
+        "file": "no",
+        "is_file": "no"
     },
     "port": {
         "desc": "target port",
         "required": "yes",
-        "value": "22"
+        "value": "22",
+        "file": "no",
+        "is_file": "no"
     },
     "user": {
         "desc": "usernames to test (value or file)",
         "required": "yes",
         "value": "root",
-        "file": "no"
+        "file": "maybe",
+        "is_file": "no"
     },
     "password": {
         "desc": "passwords to test (value or file)",
         "required": "yes",
         "value": "passwd",
-        "file": "no"
+        "file": "maybe",
+        "is_file": "no"
     },
     "auth_type": {
         "desc": "type of password authentication to use [password|keyboard-interactive|auto]",
         "required": "no",
-        "value": ""
+        "value": "",
+        "file": "no",
+        "is_file": "no"
     },
     "keyfile": {
         "desc": "file with RSA, DSA or ECDSA private key to test",
         "required": "no",
-        "value": ""
+        "value": "",
+        "file": "yes",
+        "is_file": "no"
     },
     "persistent": {
         "desc": "use persistent connections [1|0]",
         "required": "no",
-        "value": ""
+        "value": "",
+        "file": "no",
+        "is_file": "no"
     },
     "message": {
         "desc": "Error message to expect when credentials are invalid",
         "required": "yes",
-        "value": "Authentication failed"
+        "value": "Authentication failed",
+        "file": "no",
+        "is_file": "no"
     }
 }
