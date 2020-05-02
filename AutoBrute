@@ -51,10 +51,11 @@ end
 # print the available modules
 def printModules()
     modules = JSON.parse($modules)
-    puts "Available modules:\n"
+    puts "\nAvailable modules:\n\n"
     modules.each do |x,y|
-        puts "#{x}: #{y["desc"]}"
+        puts "  - #{x}: #{y["desc"]}"
     end
+    puts 
 end
 
 # execute the command
@@ -87,10 +88,19 @@ end
 
 # print the options for a module
 def show_options(options, name)
-    puts "\nOptions for module #{name}:\n\nName             Current setting              Required               Description\n-----------      -----------      -----------      -----------\n\n"
+    cpt_espace = 30
+    options.each do |x,y|
+        if y["value"].size > cpt_espace
+            cpt_espace = y["value"].size + 7
+        end
+    end
+
+    puts "\nOptions for module #{name}:\n"
+    puts "#{"name".ljust(15)}#{"Current setting".ljust(cpt_espace)}#{"Required".ljust(15)}#{"Description"}"
+    puts "#{"-----------".ljust(15)}#{"------------------".ljust(cpt_espace)}#{"-----------".ljust(15)}#{"--------------"}\n\n"
 
     options.each do |x,y|
-        puts "#{x}          #{y["value"]}           #{y["required"]}               #{y["desc"]}" 
+        puts "#{x.ljust(15)}#{y["value"].ljust(cpt_espace)}#{y["required"].ljust(15)}#{y["desc"]}" 
     end
     puts "\n\n"
 end
