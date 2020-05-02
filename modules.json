@@ -1,0 +1,7 @@
+{
+    "ssh_module": {
+        "desc": "Brute-force SSH",
+        "name": "ssh_login",
+        "var": $ssh_module
+    }
+}

@@ -12,7 +12,6 @@ require 'colorize'
 require 'tty-prompt'
 require 'json'
 #scrapper nokogiri
-#open3 to execute command
 
 # Welcome message
 def greetings()
@@ -30,10 +29,13 @@ end
 $running = true
 # create the prompt
 $prompt = TTY::Prompt.new
-$modules = { "ssh_module" => "Brute-force SSH" }
+$modules = '{"ssh_module":{"desc":"Brute-force SSH","name":"ssh_login"}}'
 
 # Options for each modules
 $ssh_module = '{"host":{"desc":"target host","required":"yes","value":""},"port":{"desc":"target port","required":"yes","value":"22"},"user":{"desc":"usernames to test (value or file)","required":"yes","value":"root","file":"no"},"password":{"desc":"passwords to test (value or file)","required":"yes","value":"passwd","file":"no"},"auth_type":{"desc":"type of password authentication to use [password|keyboard-interactive|auto]","required":"no","value":""},"keyfile":{"desc":"file with RSA, DSA or ECDSA private key to test","required":"no","value":""},"persistent":{"desc":"use persistent connections [1|0]","required":"no","value":""},"message":{"desc":"Error message to expect when credentials are invalid","required":"yes","value":"Authentication failed"}}'
+
+# Array to keep the options for each module
+$array_modules = {"ssh_module" => $ssh_module}
 
 # End message
 def bye()
@@ -48,17 +50,19 @@ end
 
 # print the available modules
 def printModules()
+    modules = JSON.parse($modules)
     puts "Available modules:\n"
-    $modules.each do |x,y|
-        puts "#{x}: #{y}"
+    modules.each do |x,y|
+        puts "#{x}: #{y["desc"]}"
     end
 end
 
 # execute the command
 def run(module_name, options)
     cpt_file = 0
-    #command = "patator ssh_login host=#{host} user=#{user} password=#{password} -x ignore:mesg='Authentication failed.'"
-    command = "patator #{module_name} "
+    modules = JSON.parse($modules)
+
+    command = "patator #{modules[module_name]["name"]} "
 
     options.each do |x,y|
         
@@ -78,7 +82,7 @@ def run(module_name, options)
     # print the command for debug purpose
     puts command
     # execute patator with the command
-
+    system(command)
 end
 
 # print the options for a module
@@ -93,11 +97,11 @@ end
 
 # get the options required for the module
 def get_options(name)
-    case name
-    when "ssh_module"
-        return $ssh_module
+    if $array_modules.key? name
+        return $array_modules[name]
     else
-        ret
+        puts "The module doesn't exist"
+        return false
     end
 end
 
@@ -129,9 +133,9 @@ def check_required(options)
 end
 
 # loop to setup the options and run the command
-def setup_module(module_name)
+def setup_module(module_name, options)
     exit = false
-    options = JSON.parse(get_options(module_name)) 
+    options = JSON.parse(options) 
 
     until exit
         full_input = ask("#{module_name} >")
@@ -148,6 +152,8 @@ def setup_module(module_name)
         when "run"
             if check_required(options)
                 run(module_name, options)
+            else
+                puts "Some required options are not set"
             end
         when "set"
             options = set_options(options, args)
@@ -168,7 +174,12 @@ def process(input)
     when "modules"
         printModules()
     when "use"
-        setup_module(args[1])
+        options = get_options(args[1])
+        if options == false 
+            puts "Wrong module"
+        else
+            setup_module(args[1], options)
+        end
     else
         puts "Wrong options"
         displayHelp()
