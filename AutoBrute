@@ -29,15 +29,16 @@ end
 $running = true
 # create the prompt
 $prompt = TTY::Prompt.new
-$modules = '{"ssh_module":{"desc":"Brute-force SSH","name":"ssh_login"},"ftp_module":{"desc":"Brute-force FTP","name":"ftp_login"}, "smb_module":{"desc":"Brute-force SMB","name":"smb_login"}}'
+$modules = '{"ssh_module":{"desc":"Brute-force SSH","name":"ssh_login"},"ftp_module":{"desc":"Brute-force FTP","name":"ftp_login"}, "smb_module":{"desc":"Brute-force SMB","name":"smb_login"}, "zip_module":{"desc":"Brute-force ZIP file","name":"unzip_pass"}}'
 
 # Options for each modules
 $ssh_module = '{"host":{"desc":"target host","required":"yes","value":"","file":"no","is_file":"no"},"port":{"desc":"target port","required":"yes","value":"22","file":"no","is_file":"no"},"user":{"desc":"usernames to test (value or file)","required":"yes","value":"root","file":"maybe","is_file":"no"},"password":{"desc":"passwords to test (value or file)","required":"yes","value":"passwd","file":"maybe","is_file":"no"},"auth_type":{"desc":"type of password authentication to use [password|keyboard-interactive|auto]","required":"no","value":"","file":"no","is_file":"no"},"keyfile":{"desc":"file with RSA, DSA or ECDSA private key to test","required":"no","value":"","file":"yes","is_file":"no"},"persistent":{"desc":"use persistent connections [1|0]","required":"no","value":"","file":"no","is_file":"no"},"message":{"desc":"Error message to expect when credentials are invalid","required":"yes","value":"Authentication failed","file":"no","is_file":"no"}}'
 $ftp_module = '{"host":{"desc":"target host","required":"yes","value":"","file":"no","is_file":"no"},"port":{"desc":"target port","required":"yes","value":"21","file":"no","is_file":"no"},"user":{"desc":"usernames to test (value or file)","required":"yes","value":"root","file":"maybe","is_file":"no"},"password":{"desc":"passwords to test (value or file)","required":"yes","value":"passwd","file":"maybe","is_file":"no"},"tls":{"desc":"use tls protocol or not [0|1]","required":"no","value":"","file":"no","is_file":"no"},"timeout":{"desc":"Seconds to wait for a response","required":"no","value":"","file":"no","is_file":"no"},"persistent":{"desc":"use persistent connections [1|0]","required":"no","value":"","file":"no","is_file":"no"},"message":{"desc":"Error message to expect when credentials are invalid","required":"yes","value":"Authentication failed","file":"no","is_file":"no"}}'
 $smb_module = '{"host":{"desc":"target host","required":"yes","value":"","file":"no","is_file":"no"},"port":{"desc":"target port","required":"yes","value":"139","file":"no","is_file":"no"},"user":{"desc":"usernames to test (value or file)","required":"yes","value":"root","file":"maybe","is_file":"no"},"password":{"desc":"passwords to test (value or file)","required":"yes","value":"passwd","file":"maybe","is_file":"no"},"password_hash":{"desc":"LM/NT hashes to test, at least one hash must be provided (\'lm:nt\' or \':nt\' or \'lm:\')","required":"no","value":"","file":"maybe","is_file":"no"},"domain":{"desc":"Domain to test","required":"no","value":"","file":"maybe","is_file":"no"},"persistent":{"desc":"use persistent connections [1|0]","required":"no","value":"","file":"no","is_file":"no"},"message":{"desc":"Error message to expect when credentials are invalid","required":"yes","value":"Authentication failed","file":"no","is_file":"no"}}'
+$zip_module ='{"zipfile":{"desc":"ZIP files to test","required":"yes","value":"","file":"yes","is_file":"no"},"password":{"desc":"passwords to test (value or file)","required":"yes","value":"passwd","file":"maybe","is_file":"no"},"message":{"desc":"Error message to expect when credentials are invalid","required":"yes","value":"ignore:code!=0","file":"no","is_file":"no"}}'
 
 # Array to keep the options for each module
-$array_modules = {"ssh_module" => $ssh_module, "ftp_module" => $ftp_module, "smb_module" => $smb_module}
+$array_modules = {"ssh_module" => $ssh_module, "ftp_module" => $ftp_module, "smb_module" => $smb_module, "zip_module" => $zip_module}
 
 # End message
 def bye()
@@ -75,7 +76,7 @@ def run(module_name, options)
                 command += "#{x}=FILE#{cpt_file} #{cpt_file}=#{y['value']} "
                 cpt_file += 1
             elsif x == "message"
-                command += "-x ignore:mesg=\'#{y['value']}\' "
+                command += "-x #{y['value']}"
                 # if the value is normal
             else
                 command += "#{x}=#{y["value"]} "
