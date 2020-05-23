@@ -29,7 +29,7 @@ end
 $running = true
 # create the prompt
 $prompt = TTY::Prompt.new
-$modules = '{"ssh_module":{"desc":"Brute-force SSH","name":"ssh_login"},"ftp_module":{"desc":"Brute-force FTP","name":"ftp_login"}, "smb_module":{"desc":"Brute-force SMB","name":"smb_login"}, "zip_module":{"desc":"Brute-force ZIP file","name":"unzip_pass"}, "telnet_module":{"desc":"Brute-force telnet","name":"telnet_login"}, "smtp_module":{"desc":"Brute-force smtp","name":"smtp_login"}, "pop_module":{"desc":"Brute-force pop3","name":"pop_login"}, "imap_module":{"desc":"Brute-force imap4","name":"imap_login"}, "mssql_module":{"desc":"Brute-force mssql","name":"mssql_login"}, "rdp_module":{"desc":"Brute-force RDP (NLA)","name":"rdp_login"}}'
+$modules = '{"ssh_module":{"desc":"Brute-force SSH","name":"ssh_login"},"ftp_module":{"desc":"Brute-force FTP","name":"ftp_login"}, "smb_module":{"desc":"Brute-force SMB","name":"smb_login"}, "zip_module":{"desc":"Brute-force ZIP file","name":"unzip_pass"}, "telnet_module":{"desc":"Brute-force telnet","name":"telnet_login"}, "smtp_module":{"desc":"Brute-force smtp","name":"smtp_login"}, "pop_module":{"desc":"Brute-force pop3","name":"pop_login"}, "imap_module":{"desc":"Brute-force imap4","name":"imap_login"}, "mssql_module":{"desc":"Brute-force mssql","name":"mssql_login"}, "rdp_module":{"desc":"Brute-force RDP (NLA)","name":"rdp_login"}, "http_module":{"desc":"Brute-force http form","name":"http_fuzz"}}'
 
 
 # Options for each modules
@@ -43,9 +43,10 @@ $pop_module = '{"host":{"desc":"target host","required":"yes","value":"","file":
 $imap_module = '{"host":{"desc":"target host","required":"yes","value":"","file":"maybe","is_file":"no"},"port":{"desc":"target port","required":"yes","value":"110","file":"no","is_file":"no"},"user":{"desc":"usernames to test","required":"yes","value":"root","file":"maybe","is_file":"no"},"password":{"desc":"passwords to test","required":"yes","value":"passwd","file":"maybe","is_file":"no"},"ssl":{"desc":"use SSL [0|1]","required":"no","value":"","file":"no","is_file":"no"},"message":{"desc":"Error message to expect when credentials are invalid","required":"yes","value":"ignore:code=-ERR","file":"no","is_file":"no"}}'
 $mssql_module = '{"host":{"desc":"target host","required":"yes","value":"","file":"maybe","is_file":"no"},"port":{"desc":"target port","required":"yes","value":"110","file":"no","is_file":"no"},"user":{"desc":"usernames to test","required":"yes","value":"root","file":"maybe","is_file":"no"},"password":{"desc":"passwords to test","required":"yes","value":"passwd","file":"maybe","is_file":"no"},"windows_auth":{"desc":"use Windows auth [0|1]","required":"no","value":"","file":"no","is_file":"no"},"domain":{"desc":"domain to test []","required":"no","value":"","file":"no","is_file":"no"},"password_hash":{"desc":"LM/NT hashes to test (\'lm:nt\' or \':nt\')","required":"no","value":"","file":"maybe","is_file":"no"},"message":{"desc":"Error message to expect when credentials are invalid","required":"yes","value":"ignore:fgrep=\'Login failed for user\'","file":"no","is_file":"no"}}'
 $rdp_module = '{"host":{"desc":"target host","required":"yes","value":"","file":"maybe","is_file":"no"},"port":{"desc":"target port","required":"yes","value":"3389","file":"no","is_file":"no"},"user":{"desc":"usernames to test","required":"yes","value":"root","file":"maybe","is_file":"no"},"password":{"desc":"passwords to test","required":"yes","value":"passwd","file":"maybe","is_file":"no"},"message":{"desc":"Error message to expect when credentials are invalid","required":"yes","value":"","file":"no","is_file":"no"}}'
+$http_module = '{"host":{"desc":"target host","required":"yes","value":"","file":"no","is_file":"no"},"port":{"desc":"target port","required":"yes","value":"80","file":"no","is_file":"no"},"user":{"desc":"usernames to test","required":"yes","value":"root","file":"maybe","is_file":"no"},"password":{"desc":"passwords to test","required":"yes","value":"passwd","file":"maybe","is_file":"no"},"message":{"desc":"Error message to expect when credentials are invalid","required":"yes","value":"","file":"no","is_file":"no"}}'
 
 # Array to keep the options for each module
-$array_modules = {"ssh_module" => $ssh_module, "ftp_module" => $ftp_module, "smb_module" => $smb_module, "zip_module" => $zip_module, "telnet_module" => $telnet_module, "smtp_module" => $smtp_module, "pop_module" => $pop_module, "imap_module" => $imap_module, "mssql_module" => $mssql_module, "rdp_module" => $rdp_module}
+$array_modules = {"ssh_module" => $ssh_module, "ftp_module" => $ftp_module, "smb_module" => $smb_module, "zip_module" => $zip_module, "telnet_module" => $telnet_module, "smtp_module" => $smtp_module, "pop_module" => $pop_module, "imap_module" => $imap_module, "mssql_module" => $mssql_module, "rdp_module" => $rdp_module, "http_module" => $http_module}
 
 # End message
 def bye()
@@ -210,6 +211,32 @@ def setup_module(module_name, options)
     end
 end
 
+# execute the whole process for http_fuzz
+def http_fuzz()
+    # ask for the target
+    # parse the target to find all the forms
+    # show the forms and ask which one to bruteforce
+    # parse the form to get the infos we need
+    # get or post, args, body if post, ssrf token,
+    # show the data found and organized
+    # ask if everything is ok
+    # permit to change stuff and add wordlist or redo everything for another target
+    # run brute force
+
+    running = true
+
+    #puts "Give me the url to the http form :"
+    input = ask("Give me the url to the http form > ")
+
+    while $running
+        input = ask("Http_module > ")
+        
+    end
+
+
+end
+
+
 #process the user inputs
 def process(input)
     full_input = input
@@ -226,6 +253,8 @@ def process(input)
         options = get_options(args[1])
         if options == false 
             puts "Wrong module"
+        elsif args[1] == "http_module"
+            http_fuzz()
         else
             setup_module(args[1], options)
         end
