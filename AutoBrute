@@ -11,7 +11,9 @@ require 'optionparser'
 require 'colorize'
 require 'tty-prompt'
 require 'json'
-#scrapper nokogiri
+require 'httparty'
+require 'nokogiri'
+require 'restclient'
 
 # Welcome message
 def greetings()
@@ -211,6 +213,21 @@ def setup_module(module_name, options)
     end
 end
 
+# Parse the target website to find the forms
+def parseTarget(url)
+    response = Nokogiri::HTML(RestClient.get(url))
+
+    forms = response.css('form')
+    puts "FOOOOOORMS"
+    puts forms
+    puts "FOOOOOORMS"
+    puts "INPUUUUUUUUUUUUUUTS"
+    inputs = forms.css('input')
+    puts inputs
+    puts "INPUUUUUUUUUUUUUUTS"
+
+end
+
 # execute the whole process for http_fuzz
 def http_fuzz()
     # ask for the target
@@ -223,15 +240,9 @@ def http_fuzz()
     # permit to change stuff and add wordlist or redo everything for another target
     # run brute force
 
-    running = true
-
-    #puts "Give me the url to the http form :"
-    input = ask("Give me the url to the http form > ")
-
-    while $running
-        input = ask("Http_module > ")
-        
-    end
+    url = ask("Give me the target url > ")
+    #forms = parseTarget(url)
+    forms = parseTarget("https://login.salesforce.com/")
 
 
 end
