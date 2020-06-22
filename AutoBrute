@@ -74,8 +74,6 @@ def displayHelp()
     puts
 end
 
-#puts "#{"name".ljust(15)}#{"Current setting".ljust(cpt_espace)}#{"Required".ljust(15)}#{"Description"}"
-
 # print the available modules
 def printModules()
     modules = JSON.parse($modules)
@@ -233,12 +231,19 @@ def parseTarget(url)
     response = Nokogiri::HTML(RestClient.get(url))
 
     forms = response.css('form')
+    puts "there are #{forms.length} forms"
+    forms_attributes = []
+    forms.each_with_index do |el, index|
+        #txt = el.to_s
+        forms_attributes[index] = el.to_s.split('>')[0]
+        puts forms_attributes[index]
+    end
     puts "FOOOOOORMS"
-    puts forms
+    #puts forms[0]
     puts "FOOOOOORMS"
     puts "INPUUUUUUUUUUUUUUTS"
-    inputs = forms.css('input')
-    puts inputs
+    #inputs = forms.css('input')
+    #puts inputs
     puts "INPUUUUUUUUUUUUUUTS"
 
 end
@@ -255,6 +260,7 @@ def http_fuzz()
     # permit to change stuff and add wordlist or redo everything for another target
     # run brute force
 
+    puts
     url = ask("Give me the target url > ")
     #forms = parseTarget(url)
     forms = parseTarget("https://login.salesforce.com/")
