@@ -11,7 +11,9 @@ require 'optionparser'
 require 'colorize'
 require 'tty-prompt'
 require 'json'
-#scrapper nokogiri
+require 'httparty'
+require 'nokogiri'
+require 'restclient'
 
 # Welcome message
 def greetings()
@@ -29,17 +31,28 @@ end
 $running = true
 # create the prompt
 $prompt = TTY::Prompt.new
-$modules = '{"ssh_module":{"desc":"Brute-force SSH","name":"ssh_login"}}'
+$modules = '{"ssh_module":{"desc":"Brute-force SSH","name":"ssh_login"},"ftp_module":{"desc":"Brute-force FTP","name":"ftp_login"}, "smb_module":{"desc":"Brute-force SMB","name":"smb_login"}, "zip_module":{"desc":"Brute-force ZIP file","name":"unzip_pass"}, "telnet_module":{"desc":"Brute-force telnet","name":"telnet_login"}, "smtp_module":{"desc":"Brute-force smtp","name":"smtp_login"}, "pop_module":{"desc":"Brute-force pop3","name":"pop_login"}, "imap_module":{"desc":"Brute-force imap4","name":"imap_login"}, "mssql_module":{"desc":"Brute-force mssql","name":"mssql_login"}, "rdp_module":{"desc":"Brute-force RDP (NLA)","name":"rdp_login"}, "http_module":{"desc":"Brute-force http form","name":"http_fuzz"}}'
+
 
 # Options for each modules
-$ssh_module = '{"host":{"desc":"target host","required":"yes","value":"","file":"no","is_file":"no"},"port":{"desc":"target port","required":"yes","value":"22","file":"no","is_file":"no"},"user":{"desc":"usernames to test (value or file)","required":"yes","value":"root","file":"maybe","is_file":"no"},"password":{"desc":"passwords to test (value or file)","required":"yes","value":"passwd","file":"maybe","is_file":"no"},"auth_type":{"desc":"type of password authentication to use [password|keyboard-interactive|auto]","required":"no","value":"","file":"no","is_file":"no"},"keyfile":{"desc":"file with RSA, DSA or ECDSA private key to test","required":"no","value":"","file":"yes","is_file":"no"},"persistent":{"desc":"use persistent connections [1|0]","required":"no","value":"","file":"no","is_file":"no"},"message":{"desc":"Error message to expect when credentials are invalid","required":"yes","value":"Authentication failed.","file":"no","is_file":"no"}}'
+$ssh_module = '{"host":{"desc":"target host","required":"yes","value":"","file":"no","is_file":"no"},"port":{"desc":"target port","required":"yes","value":"22","file":"no","is_file":"no"},"user":{"desc":"usernames to test (value or file)","required":"yes","value":"root","file":"maybe","is_file":"no"},"password":{"desc":"passwords to test (value or file)","required":"yes","value":"passwd","file":"maybe","is_file":"no"},"auth_type":{"desc":"type of password authentication to use [password|keyboard-interactive|auto]","required":"no","value":"","file":"no","is_file":"no"},"keyfile":{"desc":"file with RSA, DSA or ECDSA private key to test","required":"no","value":"","file":"yes","is_file":"no"},"persistent":{"desc":"use persistent connections [1|0]","required":"no","value":"","file":"no","is_file":"no"},"message":{"desc":"Error message to expect when credentials are invalid","required":"yes","value":"ignore:mesg=\'Authentication failed.\'","file":"no","is_file":"no"}}'
+$ftp_module = '{"host":{"desc":"target host","required":"yes","value":"","file":"no","is_file":"no"},"port":{"desc":"target port","required":"yes","value":"21","file":"no","is_file":"no"},"user":{"desc":"usernames to test (value or file)","required":"yes","value":"root","file":"maybe","is_file":"no"},"password":{"desc":"passwords to test (value or file)","required":"yes","value":"passwd","file":"maybe","is_file":"no"},"tls":{"desc":"use tls protocol or not [0|1]","required":"no","value":"","file":"no","is_file":"no"},"timeout":{"desc":"Seconds to wait for a response","required":"no","value":"","file":"no","is_file":"no"},"persistent":{"desc":"use persistent connections [1|0]","required":"no","value":"","file":"no","is_file":"no"},"message":{"desc":"Error message to expect when credentials are invalid","required":"yes","value":"ignore:mesg=\'Login incorrect.\'","file":"no","is_file":"no"}}'
+$smb_module = '{"host":{"desc":"target host","required":"yes","value":"","file":"no","is_file":"no"},"port":{"desc":"target port","required":"yes","value":"139","file":"no","is_file":"no"},"user":{"desc":"usernames to test (value or file)","required":"yes","value":"root","file":"maybe","is_file":"no"},"password":{"desc":"passwords to test (value or file)","required":"yes","value":"passwd","file":"maybe","is_file":"no"},"password_hash":{"desc":"LM/NT hashes to test, at least one hash must be provided (\'lm:nt\' or \':nt\' or \'lm:\')","required":"no","value":"","file":"maybe","is_file":"no"},"domain":{"desc":"Domain to test","required":"no","value":"","file":"maybe","is_file":"no"},"persistent":{"desc":"use persistent connections [1|0]","required":"no","value":"","file":"no","is_file":"no"},"message":{"desc":"Error message to expect when credentials are invalid","required":"yes","value":"ignore:fgrep=\'unknown user name or bad password\'","file":"no","is_file":"no"}}'
+$zip_module ='{"zipfile":{"desc":"ZIP files to test","required":"yes","value":"","file":"yes","is_file":"no"},"password":{"desc":"passwords to test (value or file)","required":"yes","value":"passwd","file":"maybe","is_file":"no"},"message":{"desc":"Error message to expect when credentials are invalid","required":"yes","value":"ignore:code!=0","file":"no","is_file":"no"}}'
+$telnet_module = '{"host":{"desc":"target host","required":"yes","value":"","file":"maybe","is_file":"no"},"port":{"desc":"target port","required":"yes","value":"23","file":"no","is_file":"no"},"inputs":{"desc":"list of values to input","required":"yes","value":"FILE0\\\nFILE1","file":"no","is_file":"no"},"prompt_re":{"desc":"regular expression to match prompts [\w+:]","required":"yes","value":"Username:|Password:","file":"no","is_file":"no"},"timeout":{"desc":"seconds to wait for a response and for prompt_re to match received data [20]","required":"yes","value":"","file":"no","is_file":"no"},"persistent":{"desc":"use persistent connections [1|0]","required":"no","value":"","file":"no","is_file":"no"},"message":{"desc":"Error message to expect when credentials are invalid","required":"yes","value":"ignore:egrep=\'Login incorrect.+Username:\'","file":"no","is_file":"no"}}'
+$smtp_module = '{"host":{"desc":"target host","required":"yes","value":"","file":"maybe","is_file":"no"},"port":{"desc":"target port","required":"yes","value":"23","file":"no","is_file":"no"},"user":{"desc":"usernames to test","required":"yes","value":"root","file":"maybe","is_file":"no"},"password":{"desc":"passwords to test","required":"yes","value":"passwd","file":"maybe","is_file":"no"},"ssl":{"desc":"use SSL [0|1]","required":"no","value":"","file":"no","is_file":"no"},"helo":{"desc":"helo or ehlo command to send after connect [ehlo its.me.com]","required":"no","value":"","file":"no","is_file":"no"},"timeout":{"desc":"seconds to wait for a response [10]","required":"yes","value":"","file":"no","is_file":"no"},"persistent":{"desc":"use persistent connections [1|0]","required":"no","value":"","file":"no","is_file":"no"},"message":{"desc":"Error message to expect when credentials are invalid","required":"yes","value":"ignore:fgrep=\'Authentication failed\'","file":"no","is_file":"no"}}'
+$pop_module = '{"host":{"desc":"target host","required":"yes","value":"","file":"maybe","is_file":"no"},"port":{"desc":"target port","required":"yes","value":"110","file":"no","is_file":"no"},"user":{"desc":"usernames to test","required":"yes","value":"root","file":"maybe","is_file":"no"},"password":{"desc":"passwords to test","required":"yes","value":"passwd","file":"maybe","is_file":"no"},"ssl":{"desc":"use SSL [0|1]","required":"no","value":"","file":"no","is_file":"no"},"timeout":{"desc":"seconds to wait for a response and for prompt_re to match received data [10]","required":"yes","value":"","file":"no","is_file":"no"},"persistent":{"desc":"use persistent connections [1|0]","required":"no","value":"","file":"no","is_file":"no"},"message":{"desc":"Error message to expect when credentials are invalid","required":"yes","value":"ignore:code=-ERR","file":"no","is_file":"no"}}'
+$imap_module = '{"host":{"desc":"target host","required":"yes","value":"","file":"maybe","is_file":"no"},"port":{"desc":"target port","required":"yes","value":"110","file":"no","is_file":"no"},"user":{"desc":"usernames to test","required":"yes","value":"root","file":"maybe","is_file":"no"},"password":{"desc":"passwords to test","required":"yes","value":"passwd","file":"maybe","is_file":"no"},"ssl":{"desc":"use SSL [0|1]","required":"no","value":"","file":"no","is_file":"no"},"message":{"desc":"Error message to expect when credentials are invalid","required":"yes","value":"ignore:code=-ERR","file":"no","is_file":"no"}}'
+$mssql_module = '{"host":{"desc":"target host","required":"yes","value":"","file":"maybe","is_file":"no"},"port":{"desc":"target port","required":"yes","value":"110","file":"no","is_file":"no"},"user":{"desc":"usernames to test","required":"yes","value":"root","file":"maybe","is_file":"no"},"password":{"desc":"passwords to test","required":"yes","value":"passwd","file":"maybe","is_file":"no"},"windows_auth":{"desc":"use Windows auth [0|1]","required":"no","value":"","file":"no","is_file":"no"},"domain":{"desc":"domain to test []","required":"no","value":"","file":"no","is_file":"no"},"password_hash":{"desc":"LM/NT hashes to test (\'lm:nt\' or \':nt\')","required":"no","value":"","file":"maybe","is_file":"no"},"message":{"desc":"Error message to expect when credentials are invalid","required":"yes","value":"ignore:fgrep=\'Login failed for user\'","file":"no","is_file":"no"}}'
+$rdp_module = '{"host":{"desc":"target host","required":"yes","value":"","file":"maybe","is_file":"no"},"port":{"desc":"target port","required":"yes","value":"3389","file":"no","is_file":"no"},"user":{"desc":"usernames to test","required":"yes","value":"root","file":"maybe","is_file":"no"},"password":{"desc":"passwords to test","required":"yes","value":"passwd","file":"maybe","is_file":"no"},"message":{"desc":"Error message to expect when credentials are invalid","required":"yes","value":"","file":"no","is_file":"no"}}'
+$http_module = '{"host":{"desc":"target host","required":"yes","value":"","file":"no","is_file":"no"},"port":{"desc":"target port","required":"yes","value":"80","file":"no","is_file":"no"},"user":{"desc":"usernames to test","required":"yes","value":"root","file":"maybe","is_file":"no"},"password":{"desc":"passwords to test","required":"yes","value":"passwd","file":"maybe","is_file":"no"},"message":{"desc":"Error message to expect when credentials are invalid","required":"yes","value":"","file":"no","is_file":"no"}}'
 
 # Array to keep the options for each module
-$array_modules = {"ssh_module" => $ssh_module}
+$array_modules = {"ssh_module" => $ssh_module, "ftp_module" => $ftp_module, "smb_module" => $smb_module, "zip_module" => $zip_module, "telnet_module" => $telnet_module, "smtp_module" => $smtp_module, "pop_module" => $pop_module, "imap_module" => $imap_module, "mssql_module" => $mssql_module, "rdp_module" => $rdp_module, "http_module" => $http_module}
 
 # End message
 def bye()
-    puts "Okei, bye !"
+    puts "Ok, bye !"
     $running = false
 end
 
@@ -88,7 +101,7 @@ def run(module_name, options)
                 command += "#{x}=FILE#{cpt_file} #{cpt_file}=#{y['value']} "
                 cpt_file += 1
             elsif x == "message"
-                command += "-x ignore:mesg=\'#{y['value']}\' "
+                command += "-x #{y['value']}"
                 # if the value is normal
             else
                 command += "#{x}=#{y["value"]} "
@@ -215,6 +228,41 @@ def setup_module(module_name, options)
     end
 end
 
+# Parse the target website to find the forms
+def parseTarget(url)
+    response = Nokogiri::HTML(RestClient.get(url))
+
+    forms = response.css('form')
+    puts "FOOOOOORMS"
+    puts forms
+    puts "FOOOOOORMS"
+    puts "INPUUUUUUUUUUUUUUTS"
+    inputs = forms.css('input')
+    puts inputs
+    puts "INPUUUUUUUUUUUUUUTS"
+
+end
+
+# execute the whole process for http_fuzz
+def http_fuzz()
+    # ask for the target
+    # parse the target to find all the forms
+    # show the forms and ask which one to bruteforce
+    # parse the form to get the infos we need
+    # get or post, args, body if post, ssrf token,
+    # show the data found and organized
+    # ask if everything is ok
+    # permit to change stuff and add wordlist or redo everything for another target
+    # run brute force
+
+    url = ask("Give me the target url > ")
+    #forms = parseTarget(url)
+    forms = parseTarget("https://login.salesforce.com/")
+
+
+end
+
+
 #process the user inputs
 def process(input)
     full_input = input
@@ -231,6 +279,8 @@ def process(input)
         options = get_options(args[1])
         if options == false 
             puts "Wrong module"
+        elsif args[1] == "http_module"
+            http_fuzz()
         else
             setup_module(args[1], options)
         end
