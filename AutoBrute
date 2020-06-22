@@ -32,7 +32,7 @@ $prompt = TTY::Prompt.new
 $modules = '{"ssh_module":{"desc":"Brute-force SSH","name":"ssh_login"}}'
 
 # Options for each modules
-$ssh_module = '{"host":{"desc":"target host","required":"yes","value":"","file":"no","is_file":"no"},"port":{"desc":"target port","required":"yes","value":"22","file":"no","is_file":"no"},"user":{"desc":"usernames to test (value or file)","required":"yes","value":"root","file":"maybe","is_file":"no"},"password":{"desc":"passwords to test (value or file)","required":"yes","value":"passwd","file":"maybe","is_file":"no"},"auth_type":{"desc":"type of password authentication to use [password|keyboard-interactive|auto]","required":"no","value":"","file":"no","is_file":"no"},"keyfile":{"desc":"file with RSA, DSA or ECDSA private key to test","required":"no","value":"","file":"yes","is_file":"no"},"persistent":{"desc":"use persistent connections [1|0]","required":"no","value":"","file":"no","is_file":"no"},"message":{"desc":"Error message to expect when credentials are invalid","required":"yes","value":"Authentication failed","file":"no","is_file":"no"}}'
+$ssh_module = '{"host":{"desc":"target host","required":"yes","value":"","file":"no","is_file":"no"},"port":{"desc":"target port","required":"yes","value":"22","file":"no","is_file":"no"},"user":{"desc":"usernames to test (value or file)","required":"yes","value":"root","file":"maybe","is_file":"no"},"password":{"desc":"passwords to test (value or file)","required":"yes","value":"passwd","file":"maybe","is_file":"no"},"auth_type":{"desc":"type of password authentication to use [password|keyboard-interactive|auto]","required":"no","value":"","file":"no","is_file":"no"},"keyfile":{"desc":"file with RSA, DSA or ECDSA private key to test","required":"no","value":"","file":"yes","is_file":"no"},"persistent":{"desc":"use persistent connections [1|0]","required":"no","value":"","file":"no","is_file":"no"},"message":{"desc":"Error message to expect when credentials are invalid","required":"yes","value":"Authentication failed.","file":"no","is_file":"no"}}'
 
 # Array to keep the options for each module
 $array_modules = {"ssh_module" => $ssh_module}
@@ -45,8 +45,23 @@ end
 
 # Display the help
 def displayHelp()
-    puts "Here is the help"
+    puts
+    puts "In the main menu:"
+    puts "   help               Display this help"
+    puts "   modules            Show the available modules"
+    puts "   use [module name]  Use this module"
+    puts "   quit               Exit the program"
+    puts
+    puts "In the configuration of a module :"
+    puts "   show                       Show the options to configure"
+    puts "   set [option name] [value]  Set a value for this option"
+    puts "   run                        Execute this module"
+    puts "   back                       Return to main menu"
+    puts "   quit                       Exit the program"
+    puts
 end
+
+#puts "#{"name".ljust(15)}#{"Current setting".ljust(cpt_espace)}#{"Required".ljust(15)}#{"Description"}"
 
 # print the available modules
 def printModules()
