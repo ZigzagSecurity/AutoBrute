@@ -234,17 +234,18 @@ def parseTarget(url)
     puts "there are #{forms.length} forms"
     forms_attributes = []
     forms.each_with_index do |el, index|
-        #txt = el.to_s
+        puts
         forms_attributes[index] = el.to_s.split('>')[0]
-        puts forms_attributes[index]
+        puts "   #{index.to_s.ljust(5)}#{forms_attributes[index]}"
     end
-    puts "FOOOOOORMS"
-    #puts forms[0]
-    puts "FOOOOOORMS"
-    puts "INPUUUUUUUUUUUUUUTS"
-    #inputs = forms.css('input')
-    #puts inputs
-    puts "INPUUUUUUUUUUUUUUTS"
+    puts " "
+    choice = ask("Which form do you want to bruteforce ?")
+    
+    return forms[choice.to_i]
+end
+
+def parseForm(form)
+    puts "on est dans parseForm"
 
 end
 
@@ -253,7 +254,7 @@ def http_fuzz()
     # ask for the target
     # parse the target to find all the forms
     # show the forms and ask which one to bruteforce
-    # parse the form to get the infos we need
+    # parse the form to get the infos we needl
     # get or post, args, body if post, ssrf token,
     # show the data found and organized
     # ask if everything is ok
@@ -262,8 +263,10 @@ def http_fuzz()
 
     puts
     url = ask("Give me the target url > ")
-    #forms = parseTarget(url)
-    forms = parseTarget("https://login.salesforce.com/")
+    #form = parseTarget(url)
+    form = parseTarget("https://login.salesforce.com/")
+
+    command = parseForm(form)
 
 
 end
