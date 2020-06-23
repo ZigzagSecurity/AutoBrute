@@ -244,8 +244,18 @@ def parseTarget(url)
     return forms[choice.to_i]
 end
 
+
+#   http_fuzz url=http://10.0.0.1/phpmyadmin/index.php method=POST follow=1 accept_cookie=1
+#   body='pma_username=root&pma_password=FILE0&server=1&lang=en' 0=passwords.txt
+#    -x ignore:fgrep='Cannot log in to the MySQL server'
 def parseForm(form)
     puts "on est dans parseForm"
+    puts "all the inputs are here :"
+    puts form.css('input')
+
+    action = form.css('form')[0]['action']
+    puts action
+
 
 end
 
