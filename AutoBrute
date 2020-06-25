@@ -45,7 +45,7 @@ $pop_module = '{"host":{"desc":"target host","required":"yes","value":"","file":
 $imap_module = '{"host":{"desc":"target host","required":"yes","value":"","file":"maybe","is_file":"no"},"port":{"desc":"target port","required":"yes","value":"110","file":"no","is_file":"no"},"user":{"desc":"usernames to test","required":"yes","value":"root","file":"maybe","is_file":"no"},"password":{"desc":"passwords to test","required":"yes","value":"passwd","file":"maybe","is_file":"no"},"ssl":{"desc":"use SSL [0|1]","required":"no","value":"","file":"no","is_file":"no"},"message":{"desc":"Error message to expect when credentials are invalid","required":"yes","value":"ignore:code=-ERR","file":"no","is_file":"no"}}'
 $mssql_module = '{"host":{"desc":"target host","required":"yes","value":"","file":"maybe","is_file":"no"},"port":{"desc":"target port","required":"yes","value":"110","file":"no","is_file":"no"},"user":{"desc":"usernames to test","required":"yes","value":"root","file":"maybe","is_file":"no"},"password":{"desc":"passwords to test","required":"yes","value":"passwd","file":"maybe","is_file":"no"},"windows_auth":{"desc":"use Windows auth [0|1]","required":"no","value":"","file":"no","is_file":"no"},"domain":{"desc":"domain to test []","required":"no","value":"","file":"no","is_file":"no"},"password_hash":{"desc":"LM/NT hashes to test (\'lm:nt\' or \':nt\')","required":"no","value":"","file":"maybe","is_file":"no"},"message":{"desc":"Error message to expect when credentials are invalid","required":"yes","value":"ignore:fgrep=\'Login failed for user\'","file":"no","is_file":"no"}}'
 $rdp_module = '{"host":{"desc":"target host","required":"yes","value":"","file":"maybe","is_file":"no"},"port":{"desc":"target port","required":"yes","value":"3389","file":"no","is_file":"no"},"user":{"desc":"usernames to test","required":"yes","value":"root","file":"maybe","is_file":"no"},"password":{"desc":"passwords to test","required":"yes","value":"passwd","file":"maybe","is_file":"no"},"message":{"desc":"Error message to expect when credentials are invalid","required":"yes","value":"","file":"no","is_file":"no"}}'
-$http_module = '{"url":{"desc":"target url","required":"yes","value":"","file":"no","is_file":"no"},"methode":{"desc":"method to use [get or port]","required":"yes","value":"","file":"no","is_file":"no"},"user":{"desc":"usernames to test","required":"yes","value":"root","file":"maybe","is_file":"no"},"password":{"desc":"passwords to test","required":"yes","value":"passwd","file":"maybe","is_file":"no"},"body":{"desc":"the body of the request if post req","required":"maybe","value":"","file":"no","is_file":"no"},"follow":{"desc":"should we follow the redirections [0 | 1]","required":"yes","value":"1","file":"no","is_file":"no"},"accept_cookie":{"desc":"should take cookies","required":"yes","value":"1","file":"no","is_file":"no"},"message":{"desc":"Error message to expect when credentials are invalid","required":"yes","value":"","file":"no","is_file":"no"}}'
+$http_module = '{"url":{"desc":"target url","required":"yes","value":"","file":"no","is_file":"no"},"method":{"desc":"method to use [get or port]","required":"yes","value":"","file":"no","is_file":"no"},"user":{"desc":"usernames to test","required":"yes","value":"root","file":"maybe","is_file":"no"},"password":{"desc":"passwords to test","required":"yes","value":"passwd","file":"maybe","is_file":"no"},"body":{"desc":"all the parameters to send with the request","required":"maybe","value":"","file":"no","is_file":"no"},"follow":{"desc":"should we follow the redirections [0 | 1]","required":"yes","value":"1","file":"no","is_file":"no"},"accept_cookie":{"desc":"should take cookies","required":"yes","value":"1","file":"no","is_file":"no"},"message":{"desc":"Error message to expect when credentials are invalid","required":"yes","value":"","file":"no","is_file":"no"}}'
 
 # Array to keep the options for each module
 $array_modules = {"ssh_module" => $ssh_module, "ftp_module" => $ftp_module, "smb_module" => $smb_module, "zip_module" => $zip_module, "telnet_module" => $telnet_module, "smtp_module" => $smtp_module, "pop_module" => $pop_module, "imap_module" => $imap_module, "mssql_module" => $mssql_module, "rdp_module" => $rdp_module, "http_module" => $http_module}
@@ -86,6 +86,39 @@ end
 
 # execute the command
 def run(module_name, options)
+    cpt_file = 0
+    modules = JSON.parse($modules)
+
+    command = "patator #{modules[module_name]["name"]} "
+
+    options.each do |x,y|
+        
+        if y["value"] != ""
+            # if the value is a path to a file
+            if y["file"] != "no" and y["is_file"] == "yes"
+                command += "#{x}=FILE#{cpt_file} #{cpt_file}=#{y['value']} "
+                cpt_file += 1
+            elsif x == "message"
+                command += "-x #{y['value']}"
+                # if the value is normal
+            else
+                command += "#{x}=#{y["value"]} "
+            end
+        end
+    end
+    # print the command for debug purpose
+    puts command
+    # execute patator with the command
+    begin
+        system(command)
+    rescue SystemExit, Interrupt
+        puts "yolo"
+    rescue Exception => e
+        puts "yolo2"
+    end
+end
+
+def run_http_fuzz(module_name, options)
     cpt_file = 0
     modules = JSON.parse($modules)
 
@@ -249,12 +282,12 @@ end
 #   body='pma_username=root&pma_password=FILE0&server=1&lang=en' 0=passwords.txt
 #    -x ignore:fgrep='Cannot log in to the MySQL server'
 def parseForm(form)
-
-    url = form["action"]
-    method = form["method"]
+    # I'm using the format "name value" to be able to use the set_options method
+    url = Array["", "url", form["action"]]
+    method = Array["", "method", form["method"]]
     hidden_inputs = form.css("input[type='hidden']")
-    password_input = form.css("input[type='password']")
-    
+    password_input = form.xpath("//input[@type='password']/@name")
+
     # get the login input
     visible_inputs = form.css("input[type!='hidden']")
     login_input = ""
@@ -266,23 +299,27 @@ def parseForm(form)
         end
     end
 
-    # create the string with all the parameters
+    # create the string with all the hidden parameters
     body = ""
     hidden_inputs.each do |el|
         body = body + el["name"] + "=" + el["value"] + "&"
     end
-    body = body + login_input["name"] + "=FILE0&" + password_input["name"] + "=FILE1"
+
+    body = "#{body}" + "#{login_input["name"]}" + "=FILE0&" + "#{password_input}" + "=FILE1"
 
     # add the question mark if get request
     if method == "get"
         body = "?#{body}"
     end
+    body = Array["", "body", body]
+
 
     # write the values in the json object 
-    options = get_options("http_module")
+    options = JSON.parse(get_options("http_module"))
 
-    options
-    return options
+    set_options(options, url)
+    set_options(options, method)
+    set_options(options, body)
 end
 
 # execute the whole process for http_fuzz
@@ -302,8 +339,11 @@ def http_fuzz()
     #form = parseTarget(url)
     form = parseTarget("https://login.salesforce.com/")
 
-    options = parseForm(form)
+    parseForm(form)
 
+    options = $http_module
+    puts "dans http fuzz"
+    puts options
     setup_module("http_module", options)
 
 end
