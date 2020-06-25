@@ -249,34 +249,40 @@ end
 #   body='pma_username=root&pma_password=FILE0&server=1&lang=en' 0=passwords.txt
 #    -x ignore:fgrep='Cannot log in to the MySQL server'
 def parseForm(form)
-    puts "on est dans parseForm"
-    #puts "all the inputs are here :"
-    #puts form.css('input')
 
     url = form["action"]
     method = form["method"]
     hidden_inputs = form.css("input[type='hidden']")
     password_input = form.css("input[type='password']")
+    
     # get the login input
-    inputs_list = form.css("input")
-    inputs_list.each_with_index do |el, index|
-        if el.include? "hidden"
-            inputs_list.delete_at(index)
+    visible_inputs = form.css("input[type!='hidden']")
+    login_input = ""
+    visible_inputs.each do |el|
+        if el.to_s =~ /(login)|(email)|(username)|(user)/i
+            login_input = el
+            puts "the login input est : #{el}"
+            break
         end
     end
-    puts inputs_list
-    
+
+    # create the string with all the parameters
     body = ""
     hidden_inputs.each do |el|
         body = body + el["name"] + "=" + el["value"] + "&"
     end
     body = body + login_input["name"] + "=FILE0&" + password_input["name"] + "=FILE1"
 
-    if method == "post"
+    # add the question mark if get request
+    if method == "get"
+        body = "?#{body}"
     end
 
+    # write the values in the json object 
+    options = get_options("http_module")
 
-
+    options
+    return options
 end
 
 # execute the whole process for http_fuzz
@@ -296,8 +302,9 @@ def http_fuzz()
     #form = parseTarget(url)
     form = parseTarget("https://login.salesforce.com/")
 
-    command = parseForm(form)
+    options = parseForm(form)
 
+    setup_module("http_module", options)
 
 end
 
